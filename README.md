@@ -37,3 +37,5 @@ npm run fire
 如果打卡挂了，你可以抓包后尝试更新 `info.json.example` 文件，然后交一个 PR。
 
 可以支持更多的通知手段，contributions are welcomed.
+
+###

@@ -142,9 +142,9 @@ async function main() {
                 username: process.env.ZJU_USERNAME,
                 password: process.env.ZJU_PASSWORD,
             }],
-            notification:{}
+            notification: {}
         }
-        if (process.env.GOTIFY_URL !== undefined) {
+        if (process.env.GOTIFY_URL !== undefined && process.env.GOTIFY_URL !== '') {
             config.notification.gotify = {
                 enabled: true,
                 URL: process.env.GOTIFY_URL,
@@ -152,9 +152,9 @@ async function main() {
                 priority: 5
             }
         }
-        if (process.env.DINGTALK_URL !== undefined) {
+        if (process.env.DINGTALK_URL !== undefined && process.env.GOTIFY_URL !== '') {
             config.notification.dingtalk = {
-                enabled:true,
+                enabled: true,
                 URL: process.env.DINGTALK_URL
             }
         }
