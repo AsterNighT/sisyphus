@@ -43,10 +43,10 @@ async function prepareFetch(username, password) {
     return fetch
 }
 
-async function getInfo(fetch, oldInfo) {
+async function getInfo(fetch, info) {
     const reportPage = await fetch(ReportURL)
     const text = await reportPage.text()
-    let info = JSON.parse(fs.readFileSync('./info.json'))
+    let oldInfo = JSON.parse(text.match(/oldInfo: ({.+}),/)[1])
     info.id = oldInfo.id
     info.uid = oldInfo.uid
     const realname = text.match(/realname: "([^\"]+)",/)[1]
