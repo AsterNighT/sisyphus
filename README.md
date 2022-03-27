@@ -5,6 +5,8 @@
 本人遗失此段代码，并且本人不同意这段代码的所作所为。使用者应当自行负责。本代码仅供节约时间使用，不可用于虚报打卡位置。
 
 ## 如何使用
+注意，如果这个 Repo 更新了，你需要同样更新你的 Fork 和本地部署。
+
 ### Github Actions
 Fork 这个 Repo，在 `Settings - Secrets - Actions` 中新建 `ZJU_PASSWORD`，`ZJU_USERNAME` 两个 Secret，并设置为你的统一认证密码和学号。
 
