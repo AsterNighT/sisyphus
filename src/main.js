@@ -128,10 +128,10 @@ async function report(data, config) {
 }
 
 async function main() {
-    if (fs.existsSync('./config.json')) {
+    if (fs.existsSync('./config/config.json')) {
         console.log('config.json exists, running as a self-hosted deployment')
-        const config = JSON.parse(fs.readFileSync('./config.json'))
-        const info = JSON.parse(fs.readFileSync('./info.json'))
+        const config = JSON.parse(fs.readFileSync('./config/config.json'))
+        const info = JSON.parse(fs.readFileSync('./config/info.json'))
         cron.schedule('0 8 * * *', () => {
             run(config, info)
         })
@@ -158,7 +158,7 @@ async function main() {
                 URL: process.env.DINGTALK_URL
             }
         }
-        const info = JSON.parse(fs.readFileSync('./info.json.example'))
+        const info = JSON.parse(fs.readFileSync('./config/info.json.example'))
         run(config, info)
     }
 }

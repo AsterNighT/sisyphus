@@ -1,4 +1,4 @@
-info.json
-config.json
+config/info.json
+config/config.json
 node_modules
 .vscode

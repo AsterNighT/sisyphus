@@ -4,7 +4,7 @@
   "description": "",
   "main": "main.js",
   "scripts": {
-    "fire": "node main.js"
+    "fire": "node src/main.js"
   },
   "author": "AsterNighT",
   "type": "module",

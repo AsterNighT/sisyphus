@@ -7,13 +7,13 @@ Fork 这个 Repo，在 `Settings - Secrets - Actions` 中新建 `ZJU_PASSWORD`�
 
 ### Local Deployment
 ``` bash
-cp config.json.example config.json
-# modify config.json
-cp info.json.example info.json
+cp config/config.json.example config/config.json
+# modify config/config.json
+cp config/info.json.example config/info.json
 npm install
 npm run fire
 ```
-脚本通过判断 `config.json` 是否存在决定使用本地配置文件还是环境变量。所以如果你想要用 `config.json`，就要用一整套。
+脚本通过判断 `config/config.json` 是否存在决定使用本地配置文件还是环境变量。所以如果你想要用 `config.json`，就要用一整套。
 你可能会想要使用 `systemd`、`supervisord`、`pm2` 一类的东西来管理它。
 
 ### Docker Deployment
