@@ -17,6 +17,8 @@ const SubmitURL = "https://healthreport.zju.edu.cn/ncov/wap/default/save"
 
 const PubkeyURL = "https://zjuam.zju.edu.cn/cas/v2/getPubKey"
 
+let DeploymentType = ''
+
 async function prepareFetch(username, password) {
     const cookieJar = new fetchCookie.toughCookie.CookieJar()
     const fetch = fetchCookie(nodeFetch, cookieJar)
@@ -74,12 +76,16 @@ async function post(fetch, info) {
     return response
 }
 
+function logLocal(...log) {
+    if (DeploymentType === 'local') console.log(...log)
+}
+
 async function run(config, oldInfo) {
     for (let account of config.account) {
         const fetch = await prepareFetch(account.username, account.password)
-        console.log("Successfully login for", account.username)
+        logLocal("Successfully login for", account.username)
         const info = await getInfo(fetch, oldInfo)
-        console.log("Successfully get info for", info.name)
+        logLocal("Successfully get info for", info.name)
         const response = await post(fetch, info)
 
         const error = await response.json()
@@ -130,6 +136,7 @@ async function report(data, config) {
 async function main() {
     if (fs.existsSync('./config/config.json')) {
         console.log('config.json exists, running as a self-hosted deployment')
+        DeploymentType = 'local'
         const config = JSON.parse(fs.readFileSync('./config/config.json'))
         const info = JSON.parse(fs.readFileSync('./config/info.json'))
         cron.schedule('0 8 * * *', () => {
@@ -137,6 +144,7 @@ async function main() {
         })
     } else {
         console.log('config.json not found, running as github actions or so')
+        DeploymentType = 'managed'
         const config = {
             account: [{
                 username: process.env.ZJU_USERNAME,
