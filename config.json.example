@@ -1,0 +1,21 @@
+{
+    "account": [
+        {
+            "username": 123,
+            "password": 123
+        },
+        {
+            "username": 456,
+            "password": 456
+        }
+    ],
+    "notification": {
+        "gotify": {
+            "enable": false,
+            "token": "",
+            "baseURL": "https://push.example.de/message?token=",
+            "title": "my title",
+            "priority": 5
+        }
+    }
+}

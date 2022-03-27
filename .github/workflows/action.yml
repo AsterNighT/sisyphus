@@ -1,0 +1,22 @@
+name: "Rolling a boulder up a hill"
+
+on:
+  workflow_dispatch:
+  # schedule:
+    # - cron: '0 8 * * *'
+
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    env:
+      ZJU_USERNAME: ${{ secrets.ZJU_USERNAME }}
+      ZJU_PASSWORD: ${{ secrets.ZJU_PASSWORD }}
+      GOTIFY_URL: ${{ secrets.GOTIFY_URL }}
+      DINGTALK_URL: ${{ secrets.DINGTALK_URL }}
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v2
+      with:
+        node-version: '16'
+    - run: npm install
+    - run: npm run fire
