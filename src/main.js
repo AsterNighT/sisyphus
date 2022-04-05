@@ -93,7 +93,8 @@ async function run(config, oldInfo) {
             // There are few things we can do. Just report the error and stop.
             await report(JSON.stringify(error), config)
             if (error['m'] !== '今天已经填报了') {
-                process.exit()
+                // Fail the github workflow, so that repo keeper would get an email.
+                process.exit(1)
             }
         } else {
             report('Success!', config)
