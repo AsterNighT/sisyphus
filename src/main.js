@@ -141,7 +141,12 @@ async function main() {
         const config = JSON.parse(fs.readFileSync('./config/config.json'))
         const info = JSON.parse(fs.readFileSync('./config/info.json'))
         cron.schedule('0 8 * * *', () => {
-            run(config, info)
+            try {
+                run(config, info)
+            } catch (error) {
+                report(error, config)
+                process.exit(1)
+            }
         })
     } else {
         console.log('config.json not found, running as github actions or so')
@@ -168,7 +173,12 @@ async function main() {
             }
         }
         const info = JSON.parse(fs.readFileSync('./config/info.json.example'))
-        run(config, info)
+        try {
+            run(config, info)
+        } catch (error) {
+            report(error, config);
+            process.exit(1)
+        }
     }
 }
 
