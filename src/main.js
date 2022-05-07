@@ -1,5 +1,6 @@
 import nodeFetch from 'node-fetch'
 import fetchCookie from 'fetch-cookie'
+import { FormData } from "formdata-node"
 import jsdom from 'jsdom'
 import RSAUtils from './RSAUtils.js'
 import fs from 'fs'
@@ -61,6 +62,26 @@ async function getInfo(fetch, info) {
     const day = ("0" + date.getDate()).slice(-2)
     info['date'] = `${year}${month}${day}` //YYYYMMDD
     info['created'] = `${Math.floor(Date.now() / 1000)}`
+
+    // Verify code
+    while (true) {
+        const codeImageResponse = await fetch('https://healthreport.zju.edu.cn/ncov/wap/default/code')
+        // const codeImage = await codeImageResponse.blob();
+        // console.log(codeImage)
+        const formData = new FormData();
+        formData.set("image", await codeImageResponse.blob())
+        const ocrResult = await fetch('http://asternight.site:9898/ocr/file/text', {
+            method: 'POST',
+            body: formData
+        })
+        const code = await ocrResult.text()
+        // Remove those obvious errors
+        if (/^[a-zA-Z]{4}$/.test(code)) {
+            info['verifyCode'] = code;
+            console.log(info['verifyCode'])
+            break
+        }
+    }
     return info
 }
 
@@ -80,24 +101,44 @@ function logLocal(...log) {
     if (DeploymentType === 'local') console.log(...log)
 }
 
+async function tryReport(account, oldInfo) {
+    const fetch = await prepareFetch(account.username, account.password)
+    logLocal("Successfully login for", account.username)
+    const info = await getInfo(fetch, oldInfo)
+    logLocal("Successfully get info for", info.name)
+    const response = await post(fetch, info)
+
+    return response.json()
+}
+
 async function run(config, oldInfo) {
     for (let account of config.account) {
-        const fetch = await prepareFetch(account.username, account.password)
-        logLocal("Successfully login for", account.username)
-        const info = await getInfo(fetch, oldInfo)
-        logLocal("Successfully get info for", info.name)
-        const response = await post(fetch, info)
-
-        const error = await response.json()
-        if (error['e'] !== 0) {
-            // There are few things we can do. Just report the error and stop.
-            await report(JSON.stringify(error), config)
-            if (error['m'] !== '今天已经填报了') {
-                // Fail the github workflow, so that repo keeper would get an email.
+        let tries = 0
+        const MaxTries = 5
+        for (tries = 0; tries < MaxTries; tries++) {
+            const error = await tryReport(account, oldInfo)
+            if (error['e'] !== 0) {
+                // There are few things we can do. Report the error is always a good idea.
+                await report(JSON.stringify(error), config)
+                if (error['m'] === '今天已经填报了') {
+                    // This is ok.
+                    break;
+                }
+                if (error['m'] === '验证码错误') {
+                    // This is possible, give it another few tries.
+                    continue;
+                }
+                // We do not know the error. Fail the github workflow, so that repo keeper would get an email.
                 process.exit(1)
+            } else {
+                report('Success!', config)
+                break;
             }
-        } else {
-            report('Success!', config)
+        }
+        // Somehow we failed in a recoverable error even after MaxTries. It could be bad luck, or something else.
+        if (tries === MaxTries) {
+            await report("Retries failed. Check logs for more information", config)
+            process.exit(1)
         }
     }
 }
@@ -140,6 +181,7 @@ async function main() {
         DeploymentType = 'local'
         const config = JSON.parse(fs.readFileSync('./config/config.json'))
         const info = JSON.parse(fs.readFileSync('./config/info.json'))
+        run(config, info)
         cron.schedule('0 8 * * *', () => {
             try {
                 run(config, info)
