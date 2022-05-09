@@ -11,12 +11,13 @@
     ],
     "notification": {
         "gotify": {
-            "enable": false,
+            "enabled": false,
             "URL": "https://push.example.de/message?token=123",
             "title": "my title",
             "priority": 5
         },
         "dingtalk": {
+            "enabled": false,
             "URL":"https://oapi.dingtalk.com/robot/send?access_token=42"
         }
     }

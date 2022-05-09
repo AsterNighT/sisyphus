@@ -1,4 +1,6 @@
 config/info.json
 config/config.json
+dist
 node_modules
 .vscode
+tsconfig.tsbuildinfo
