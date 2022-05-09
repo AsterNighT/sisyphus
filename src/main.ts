@@ -1,4 +1,4 @@
-import nodeFetch, { FormData } from 'node-fetch';
+import nodeFetch, {FormData as FetchFormData} from 'node-fetch';
 import fetchCookie from 'fetch-cookie';
 import jsdom from 'jsdom';
 import RSAUtils from './RSAUtils.js';
@@ -102,7 +102,7 @@ function reportLocal(...log: any[]): void {
 }
 
 async function getVerifyCode(image: Blob): Promise<string> {
-    const formData = new FormData();
+    const formData = new FetchFormData();
     formData.set('image', image);
     const ocrResult = await fetch(APIURL, {
         method: 'POST',
@@ -117,7 +117,7 @@ async function prepareFetch(username: string, password: string) {
     const dom = new jsdom.JSDOM(await loginPage.text());
     const executionDom = dom.window.document.querySelector('[name=execution]');
     if (executionDom === null) reportFatal('Login page changed');
-    const execution = executionDom as any['value'] as string;
+    const execution = (executionDom as any)['value'] as string;
     const getPubKey = await fetch(PubkeyURL);
     const pubkeyInfo: any = await getPubKey.json();
     const key = RSAUtils.getKeyPair(pubkeyInfo.exponent, '', pubkeyInfo.modulus);
@@ -129,12 +129,11 @@ async function prepareFetch(username: string, password: string) {
     params.append('authcode', '');
     params.append('execution', execution);
     params.append('_eventId', 'submit');
-    const response = await fetch(LoginPostURL, {
+    await fetch(LoginPostURL, {
         method: 'POST',
         body: params,
     // redirect: 'manual',
     });
-    console.log(await response.text());
     // Ok, now we have the cookies needed to submit the form
     return fetch;
 }

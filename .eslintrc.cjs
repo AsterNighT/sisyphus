@@ -19,5 +19,8 @@ module.exports = {
         'no-empty': 'warn',
         'no-cond-assign': ['error', 'always'],
         '@typescript-eslint/no-shadow': ['error', { 'builtinGlobals': true }],
-    }
+    },
+    parserOptions: {
+        "project": ["./tsconfig.json"]
+    },
 };
