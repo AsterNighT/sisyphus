@@ -11,6 +11,8 @@
 Fork 这个 Repo，在 `Settings - Secrets - Actions` 中新建 `ZJU_PASSWORD`，`ZJU_USERNAME` 两个 Secret，并设置为你的统一认证密码和学号。
 你可以在 `.github/workflows/actions.yml` 中设置具体的打卡时间，格式为 [cron](https://crontab.guru/)。注意 Github workflow 使用 UTC+0 时间，而我们这儿是 UTC+8， 所以你可能会想要在实际时间的基础上提前8小时。
 
+你可以通过在Sercet中使用`","`间隔符来为多个账号打卡，例如`ZJU_USERNAME = "3010100001,3010100002,3010100003"`，`ZJU_PASSWORD = "passwd1,passwd2,passwd3"`。
+
 ### Local Deployment
 ``` bash
 cp config/config.json.example config/config.json

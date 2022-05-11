@@ -1,4 +1,4 @@
-import nodeFetch, {FormData as FetchFormData} from 'node-fetch';
+import nodeFetch, { FormData as FetchFormData } from 'node-fetch';
 import fetchCookie from 'fetch-cookie';
 import jsdom from 'jsdom';
 import RSAUtils from './RSAUtils.js';
@@ -23,7 +23,7 @@ const APIURL = 'http://asternight.site:9898/ocr/file/text';
 
 let config: Config;
 let fetch: Fetch;
-let runType:RunType;
+let runType: RunType;
 
 type Fetch = typeof nodeFetch;
 type Account = {
@@ -132,7 +132,7 @@ async function prepareFetch(username: string, password: string) {
     await fetch(LoginPostURL, {
         method: 'POST',
         body: params,
-    // redirect: 'manual',
+        // redirect: 'manual',
     });
     // Ok, now we have the cookies needed to submit the form
     return fetch;
@@ -232,11 +232,16 @@ function determineRunType() {
 }
 
 function getConfigFromEnv() {
+    const usernameArray = (process.env.ZJU_USERNAME || reportFatal('ZJU_USERNAME not set')).split(",").map(s => s.trim());
+    const passwordArray = (process.env.ZJU_PASSWORD || reportFatal('ZJU_PASSWORD not set')).split(",").map(s => s.trim());
+
+    if (usernameArray.length !== passwordArray.length) {
+        console.error("username and password length mismatch");
+    }
+    const accountArray = usernameArray.map((username, i) => ({ username, password: passwordArray[i] }));
+
     config = {
-        account: [{
-            username: process.env.ZJU_USERNAME || reportFatal('ZJU_USERNAME not set'),
-            password: process.env.ZJU_PASSWORD || reportFatal('ZJU_PASSWORD not set'),
-        }],
+        account: accountArray,
         notification: {},
     };
     if (process.env.GOTIFY_URL) {
@@ -270,7 +275,7 @@ async function main() {
                 process.exit(1);
             }
         });
-    } 
+    }
     if (runType === RunType.Workflow) {
         console.log('config.json not found, running as github actions or so');
         getConfigFromEnv();
@@ -282,7 +287,7 @@ async function main() {
             process.exit(1);
         }
     }
-    if(runType === RunType.Debug) {
+    if (runType === RunType.Debug) {
         console.log('Running in debug mode');
         const info = JSON.parse(fs.readFileSync('./config/info.json.example').toString());
         run(info);
