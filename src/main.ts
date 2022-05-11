@@ -238,13 +238,7 @@ function getConfigFromEnv() {
     if (usernameArray.length !== passwordArray.length) {
         console.error("username and password length mismatch");
     }
-    const accountArray = usernameArray.map((username,i) => ({username, password: passwordArray[i]});
-    for (let i = 0; i < usernameArray.length; i++) {
-        accountArray.push({
-            username: usernameArray[i],
-            password: passwordArray[i],
-        });
-    }
+    const accountArray = usernameArray.map((username, i) => ({ username, password: passwordArray[i] }));
 
     config = {
         account: accountArray,
