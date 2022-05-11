@@ -232,13 +232,13 @@ function determineRunType() {
 }
 
 function getConfigFromEnv() {
-    const usernameArray = (process.env.ZJU_USERNAME || reportFatal('ZJU_USERNAME not set')).split(",")
-    const passwordArray = (process.env.ZJU_PASSWORD || reportFatal('ZJU_PASSWORD not set')).split(",")
+    const usernameArray = (process.env.ZJU_USERNAME || reportFatal('ZJU_USERNAME not set')).split(",").map(s => s.trim());
+    const passwordArray = (process.env.ZJU_PASSWORD || reportFatal('ZJU_PASSWORD not set')).split(",").map(s => s.trim());
 
-    if (usernameArray.length != passwordArray.length) {
-        console.error("username and password length mismatch, please use comma ',' without whitespace")
+    if (usernameArray.length !== passwordArray.length) {
+        console.error("username and password length mismatch");
     }
-    let accountArray = new Array();
+    const accountArray = usernameArray.map((username,i) => ({username, password: passwordArray[i]});
     for (let i = 0; i < usernameArray.length; i++) {
         accountArray.push({
             username: usernameArray[i],
