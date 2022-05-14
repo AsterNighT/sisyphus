@@ -207,8 +207,6 @@ async function run (oldInfo: Info) {
         let tries = 0;
         const MaxTries = 5;
         for (tries = 0; tries < MaxTries; tries++) {
-            // If hosted on github, runs have to be gapped
-            if(tries !== 0 && runType === RunType.Workflow) await new Promise(r => setTimeout(r, 180000));
             const error: SubmitResult = await trySubmit(account, oldInfo);
             if (error.e !== 0) {
                 // There are few things we can do. Report the error is always a good idea.
@@ -233,6 +231,8 @@ async function run (oldInfo: Info) {
             await report('Retries failed. Check logs for more information');
             process.exit(1);
         }
+        // If hosted on github, runs have to be gapped
+        if(runType === RunType.Workflow) await new Promise(r => setTimeout(r, 180000));
     }
 }
 
