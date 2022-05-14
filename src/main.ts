@@ -61,7 +61,7 @@ enum RunType {
     Debug
 }
 
-async function report(data: any): Promise<void> {
+async function report (data: any): Promise<void> {
     const notification = config.notification;
 
     console.log(data);
@@ -92,26 +92,34 @@ async function report(data: any): Promise<void> {
     }
 }
 
-function reportFatal(info = ''): never {
-    report(`Error occurs in code: ${info} \n At ${new Error().stack}`);
+function reportFatal (info = ''): never {
+    report(`Fatal error occurs in code: ${info} \n At ${new Error().stack}`);
     process.exit(1);
 }
 
-function reportLocal(...log: any[]): void {
+function reportError (info = ''): never {
+    // It should be reported in try-catch
+    // report(`Error occurs in code: ${info} \n At ${new Error().stack}`);
+    throw new Error(info);
+}
+
+function reportLocal (...log: any[]): void {
     if (runType === RunType.Local || runType === RunType.Debug) console.log(...log);
 }
 
-async function getVerifyCode(image: Blob): Promise<string> {
+async function getVerifyCode (image: Blob): Promise<string> {
     const formData = new FetchFormData();
     formData.set('image', image);
     const ocrResult = await fetch(APIURL, {
         method: 'POST',
         body: formData,
     });
+    if (!ocrResult.ok) reportFatal('Failed to get verify code: ' + ocrResult.statusText);
+
     return ocrResult.text();
 }
 
-async function prepareFetch(username: string, password: string) {
+async function prepareFetch (username: string, password: string) {
     fetch = fetchCookie(nodeFetch, new fetchCookie.toughCookie.CookieJar());
     const loginPage = await fetch(LoginRedirectToReportURL);
     const dom = new jsdom.JSDOM(await loginPage.text());
@@ -129,16 +137,17 @@ async function prepareFetch(username: string, password: string) {
     params.append('authcode', '');
     params.append('execution', execution);
     params.append('_eventId', 'submit');
-    await fetch(LoginPostURL, {
+    const loginResult = await fetch(LoginPostURL, {
         method: 'POST',
         body: params,
         // redirect: 'manual',
     });
+    if(!loginResult.ok) reportError('Failed to login: ' + loginResult.statusText);
     // Ok, now we have the cookies needed to submit the form
     return fetch;
 }
 
-async function getInfo(info: Info) {
+async function getInfo (info: Info) {
     const reportPage = await fetch(ReportURL);
     const text = await reportPage.text();
     const oldInfo = JSON.parse((text.match(/oldInfo: ({.+}),/) || reportFatal('Info format changed'))[1]);
@@ -171,7 +180,7 @@ async function getInfo(info: Info) {
     return info;
 }
 
-async function postInfo(info: Info) {
+async function postInfo (info: Info) {
     const formData = new URLSearchParams();
 
     for (const key in info) {
@@ -183,7 +192,7 @@ async function postInfo(info: Info) {
     return response;
 }
 
-async function trySubmit(account: Account, oldInfo: Info): Promise<SubmitResult> {
+async function trySubmit (account: Account, oldInfo: Info): Promise<SubmitResult> {
     await prepareFetch(account.username, account.password);
     reportLocal('Successfully login for', account.username);
     const info = await getInfo(oldInfo);
@@ -193,11 +202,13 @@ async function trySubmit(account: Account, oldInfo: Info): Promise<SubmitResult>
     return response.json() as Promise<SubmitResult>;
 }
 
-async function run(oldInfo: Info) {
+async function run (oldInfo: Info) {
     for (const account of config.account) {
         let tries = 0;
         const MaxTries = 5;
         for (tries = 0; tries < MaxTries; tries++) {
+            // If hosted on github, runs have to be gapped
+            if(tries !== 0 && runType === RunType.Workflow) await new Promise(r => setTimeout(r, 60000));
             const error: SubmitResult = await trySubmit(account, oldInfo);
             if (error.e !== 0) {
                 // There are few things we can do. Report the error is always a good idea.
@@ -225,18 +236,18 @@ async function run(oldInfo: Info) {
     }
 }
 
-function determineRunType() {
+function determineRunType () {
     if (process.env.DEBUG) return RunType.Debug;
     if (fs.existsSync('./config/config.json')) return RunType.Local;
     else return RunType.Workflow;
 }
 
-function getConfigFromEnv() {
-    const usernameArray = (process.env.ZJU_USERNAME || reportFatal('ZJU_USERNAME not set')).split(",").map(s => s.trim());
-    const passwordArray = (process.env.ZJU_PASSWORD || reportFatal('ZJU_PASSWORD not set')).split(",").map(s => s.trim());
+function getConfigFromEnv () {
+    const usernameArray = (process.env.ZJU_USERNAME || reportFatal('ZJU_USERNAME not set')).split(',').map(s => s.trim());
+    const passwordArray = (process.env.ZJU_PASSWORD || reportFatal('ZJU_PASSWORD not set')).split(',').map(s => s.trim());
 
     if (usernameArray.length !== passwordArray.length) {
-        console.error("username and password length mismatch");
+        console.error('username and password length mismatch');
     }
     const accountArray = usernameArray.map((username, i) => ({ username, password: passwordArray[i] }));
 
@@ -260,7 +271,7 @@ function getConfigFromEnv() {
     }
 }
 
-async function main() {
+async function main () {
     runType = determineRunType();
     if (runType === RunType.Local) {
         console.log('config.json exists, running as a self-hosted deployment');
