@@ -3,11 +3,12 @@ name: "Rolling a boulder up a hill"
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 1 * * *'
+    - cron: '0 16 * * *'
 
 jobs:
   main:
     runs-on: ubuntu-latest
+    environment: Sisyphus_Env
     env:
       ZJU_USERNAME: ${{ secrets.ZJU_USERNAME }}
       ZJU_PASSWORD: ${{ secrets.ZJU_PASSWORD }}
