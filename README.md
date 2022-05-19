@@ -9,9 +9,11 @@
 
 ### Github Actions
 Fork 这个 Repo，在 `Settings - Secrets - Actions` 中新建 `ZJU_PASSWORD`，`ZJU_USERNAME` 两个 Secret，并设置为你的统一认证密码和学号。
-你可以在 `.github/workflows/actions.yml` 中设置具体的打卡时间，格式为 [cron](https://crontab.guru/)。注意 Github workflow 使用 UTC+0 时间，而我们这儿是 UTC+8， 所以你可能会想要在实际时间的基础上提前8小时。
+<!-- 你可以在 `.github/workflows/actions.yml` 中设置具体的打卡时间，格式为 [cron](https://crontab.guru/)。注意 Github workflow 使用 UTC+0 时间，而我们这儿是 UTC+8， 所以你可能会想要在实际时间的基础上提前8小时。 -->
 
 你可以通过在Sercet中使用`","`间隔符来为多个账号打卡，例如`ZJU_USERNAME = "3010100001,3010100002,3010100003"`，`ZJU_PASSWORD = "passwd1,passwd2,passwd3"`。
+
+默认的打卡时间是北京时间凌晨0点，但是你可以通过设置Environments来自定义打卡时间，即在每日0点整触发Actions后，会有一个额外的延时，且时长可以自定义。方法如下：运行完一次Actions之后，在Settings -> Environments中会自动多出一个名为Sisyphus_Env的环境（也可以自己手动添加），修改其中的变量`Wait timer`为你需要的延时时长（单位为分钟）然后点击"Save protection rules"。例如你需要设置每天凌晨4点打卡，只需要将这个值设置为240。
 
 ### Local Deployment
 ``` bash
