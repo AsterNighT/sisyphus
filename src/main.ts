@@ -21,6 +21,8 @@ const PubkeyURL = 'https://zjuam.zju.edu.cn/cas/v2/getPubKey';
 
 const APIURL = 'http://asternight.site:9898/ocr/file/text';
 
+const JitterScale = 0.01;
+
 let config: Config;
 let fetch: Fetch;
 let runType: RunType;
@@ -204,6 +206,14 @@ async function trySubmit (account: Account, oldInfo: Info): Promise<SubmitResult
 
 async function run (oldInfo: Info) {
     for (const account of config.account) {
+        let geo_api_info = JSON.parse(oldInfo.geo_api_info);
+        geo_api_info.position.Q += Math.random() * JitterScale * 2 - JitterScale;
+        geo_api_info.position.R += Math.random() * JitterScale * 2 - JitterScale;
+        geo_api_info.position.lng += Math.random() * JitterScale * 2 - JitterScale;
+        geo_api_info.position.lat += Math.random() * JitterScale * 2 - JitterScale;
+        console.log('Jitter position: ', JSON.stringify(geo_api_info.position));
+        oldInfo.geo_api_info = JSON.stringify(geo_api_info);
+
         let tries = 0;
         const MaxTries = 5;
         for (tries = 0; tries < MaxTries; tries++) {
