@@ -21,6 +21,8 @@ const PubkeyURL = 'https://zjuam.zju.edu.cn/cas/v2/getPubKey';
 
 const APIURL = 'http://asternight.site:9898/ocr/file/text';
 
+const JitterScale = 0.002;  // 100km * JitterScale
+
 let config: Config;
 let fetch: Fetch;
 let runType: RunType;
@@ -61,7 +63,7 @@ enum RunType {
     Debug
 }
 
-async function report (data: any): Promise<void> {
+async function report(data: any): Promise<void> {
     const notification = config.notification;
 
     console.log(data);
@@ -92,22 +94,22 @@ async function report (data: any): Promise<void> {
     }
 }
 
-function reportFatal (info = ''): never {
+function reportFatal(info = ''): never {
     report(`Fatal error occurs in code: ${info} \n At ${new Error().stack}`);
     process.exit(1);
 }
 
-function reportError (info = ''): never {
+function reportError(info = ''): never {
     // It should be reported in try-catch
     // report(`Error occurs in code: ${info} \n At ${new Error().stack}`);
     throw new Error(info);
 }
 
-function reportLocal (...log: any[]): void {
+function reportLocal(...log: any[]): void {
     if (runType === RunType.Local || runType === RunType.Debug) console.log(...log);
 }
 
-async function getVerifyCode (image: Blob): Promise<string> {
+async function getVerifyCode(image: Blob): Promise<string> {
     const formData = new FetchFormData();
     formData.set('image', image);
     const ocrResult = await fetch(APIURL, {
@@ -119,7 +121,7 @@ async function getVerifyCode (image: Blob): Promise<string> {
     return ocrResult.text();
 }
 
-async function prepareFetch (username: string, password: string) {
+async function prepareFetch(username: string, password: string) {
     fetch = fetchCookie(nodeFetch, new fetchCookie.toughCookie.CookieJar());
     const loginPage = await fetch(LoginRedirectToReportURL);
     const dom = new jsdom.JSDOM(await loginPage.text());
@@ -142,12 +144,12 @@ async function prepareFetch (username: string, password: string) {
         body: params,
         // redirect: 'manual',
     });
-    if(!loginResult.ok) reportError('Failed to login: ' + loginResult.statusText);
+    if (!loginResult.ok) reportError('Failed to login: ' + loginResult.statusText);
     // Ok, now we have the cookies needed to submit the form
     return fetch;
 }
 
-async function getInfo (info: Info) {
+async function getInfo(info: Info) {
     const reportPage = await fetch(ReportURL);
     const text = await reportPage.text();
     const oldInfo = JSON.parse((text.match(/oldInfo: ({.+}),/) || reportFatal('Info format changed'))[1]);
@@ -180,7 +182,7 @@ async function getInfo (info: Info) {
     return info;
 }
 
-async function postInfo (info: Info) {
+async function postInfo(info: Info) {
     const formData = new URLSearchParams();
 
     for (const key in info) {
@@ -192,7 +194,7 @@ async function postInfo (info: Info) {
     return response;
 }
 
-async function trySubmit (account: Account, oldInfo: Info): Promise<SubmitResult> {
+async function trySubmit(account: Account, oldInfo: Info): Promise<SubmitResult> {
     await prepareFetch(account.username, account.password);
     reportLocal('Successfully login for', account.username);
     const info = await getInfo(oldInfo);
@@ -202,8 +204,16 @@ async function trySubmit (account: Account, oldInfo: Info): Promise<SubmitResult
     return response.json() as Promise<SubmitResult>;
 }
 
-async function run (oldInfo: Info) {
+async function run(oldInfo: Info) {
     for (const account of config.account) {
+        let geo_api_info = JSON.parse(oldInfo.geo_api_info);
+        geo_api_info.position.Q += Math.random() * JitterScale * 2 - JitterScale;
+        geo_api_info.position.R += Math.random() * JitterScale * 2 - JitterScale;
+        geo_api_info.position.lng += Math.random() * JitterScale * 2 - JitterScale;
+        geo_api_info.position.lat += Math.random() * JitterScale * 2 - JitterScale;
+        console.log('Jitter position: ', JSON.stringify(geo_api_info.position));
+        oldInfo.geo_api_info = JSON.stringify(geo_api_info);
+
         let tries = 0;
         const MaxTries = 5;
         for (tries = 0; tries < MaxTries; tries++) {
@@ -232,17 +242,17 @@ async function run (oldInfo: Info) {
             process.exit(1);
         }
         // If hosted on github, runs have to be gapped
-        if(runType === RunType.Workflow) await new Promise(r => setTimeout(r, 180000));
+        if (runType === RunType.Workflow) await new Promise(r => setTimeout(r, 180000));
     }
 }
 
-function determineRunType () {
+function determineRunType() {
     if (process.env.DEBUG) return RunType.Debug;
     if (fs.existsSync('./config/config.json')) return RunType.Local;
     else return RunType.Workflow;
 }
 
-function getConfigFromEnv () {
+function getConfigFromEnv() {
     const usernameArray = (process.env.ZJU_USERNAME || reportFatal('ZJU_USERNAME not set')).split(',').map(s => s.trim());
     const passwordArray = (process.env.ZJU_PASSWORD || reportFatal('ZJU_PASSWORD not set')).split(',').map(s => s.trim());
 
@@ -271,7 +281,7 @@ function getConfigFromEnv () {
     }
 }
 
-async function main () {
+async function main() {
     runType = determineRunType();
     if (runType === RunType.Local) {
         console.log('config.json exists, running as a self-hosted deployment');
