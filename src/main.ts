@@ -63,7 +63,7 @@ enum RunType {
     Debug
 }
 
-async function report(data: any): Promise<void> {
+async function report (data: any): Promise<void> {
     const notification = config.notification;
 
     console.log(data);
@@ -94,22 +94,22 @@ async function report(data: any): Promise<void> {
     }
 }
 
-function reportFatal(info = ''): never {
+function reportFatal (info = ''): never {
     report(`Fatal error occurs in code: ${info} \n At ${new Error().stack}`);
     process.exit(1);
 }
 
-function reportError(info = ''): never {
+function reportError (info = ''): never {
     // It should be reported in try-catch
     // report(`Error occurs in code: ${info} \n At ${new Error().stack}`);
     throw new Error(info);
 }
 
-function reportLocal(...log: any[]): void {
+function reportLocal (...log: any[]): void {
     if (runType === RunType.Local || runType === RunType.Debug) console.log(...log);
 }
 
-async function getVerifyCode(image: Blob): Promise<string> {
+async function getVerifyCode (image: Blob): Promise<string> {
     const formData = new FetchFormData();
     formData.set('image', image);
     const ocrResult = await fetch(APIURL, {
@@ -121,7 +121,7 @@ async function getVerifyCode(image: Blob): Promise<string> {
     return ocrResult.text();
 }
 
-async function prepareFetch(username: string, password: string) {
+async function prepareFetch (username: string, password: string) {
     fetch = fetchCookie(nodeFetch, new fetchCookie.toughCookie.CookieJar());
     const loginPage = await fetch(LoginRedirectToReportURL);
     const dom = new jsdom.JSDOM(await loginPage.text());
@@ -149,16 +149,12 @@ async function prepareFetch(username: string, password: string) {
     return fetch;
 }
 
-async function getInfo(info: Info) {
+async function getInfo (info: Info) {
     const reportPage = await fetch(ReportURL);
     const text = await reportPage.text();
     const oldInfo = JSON.parse((text.match(/oldInfo: ({.+}),/) || reportFatal('Info format changed'))[1]);
     info.id = oldInfo.id;
     info.uid = oldInfo.uid;
-    const realname = (text.match(/realname: "([^"]+)",/) || reportFatal('Realname format changed'))[1];
-    const number = (text.match(/number: '([^']+)',/) || reportFatal('Number format changed'))[1];
-    info.name = realname;
-    info.number = number;
 
     const date = new Date();
     const year = date.getFullYear();
@@ -166,23 +162,23 @@ async function getInfo(info: Info) {
     const day = ('0' + date.getDate()).slice(-2);
     info.date = `${year}${month}${day}`; //YYYYMMDD
     info.created = `${Math.floor(Date.now() / 1000)}`;
-
+    info.verifyCode = '';
     // Verify code
-    for (; ;) {
-        const codeImageResponse = await fetch(VerifyCodeURL);
-        const verifyCode = await getVerifyCode(await codeImageResponse.blob());
+    // for (; ;) {
+    //     const codeImageResponse = await fetch(VerifyCodeURL);
+    //     const verifyCode = await getVerifyCode(await codeImageResponse.blob());
 
-        // Remove those obvious errors
-        if (/^[a-zA-Z]{4}$/.test(verifyCode)) {
-            info.verifyCode = verifyCode;
-            console.log(info.verifyCode);
-            break;
-        }
-    }
+    //     // Remove those obvious errors
+    //     if (/^[a-zA-Z]{4}$/.test(verifyCode)) {
+    //         info.verifyCode = verifyCode;
+    //         console.log(info.verifyCode);
+    //         break;
+    //     }
+    // }
     return info;
 }
 
-async function postInfo(info: Info) {
+async function postInfo (info: Info) {
     const formData = new URLSearchParams();
 
     for (const key in info) {
@@ -194,7 +190,7 @@ async function postInfo(info: Info) {
     return response;
 }
 
-async function trySubmit(account: Account, oldInfo: Info): Promise<SubmitResult> {
+async function trySubmit (account: Account, oldInfo: Info): Promise<SubmitResult> {
     await prepareFetch(account.username, account.password);
     reportLocal('Successfully login for', account.username);
     const info = await getInfo(oldInfo);
@@ -204,9 +200,9 @@ async function trySubmit(account: Account, oldInfo: Info): Promise<SubmitResult>
     return response.json() as Promise<SubmitResult>;
 }
 
-async function run(oldInfo: Info) {
+async function run (oldInfo: Info) {
     for (const account of config.account) {
-        let geo_api_info = JSON.parse(oldInfo.geo_api_info);
+        const geo_api_info = JSON.parse(oldInfo.geo_api_info);
         geo_api_info.position.Q += Math.random() * JitterScale * 2 - JitterScale;
         geo_api_info.position.R += Math.random() * JitterScale * 2 - JitterScale;
         geo_api_info.position.lng += Math.random() * JitterScale * 2 - JitterScale;
@@ -246,13 +242,13 @@ async function run(oldInfo: Info) {
     }
 }
 
-function determineRunType() {
+function determineRunType () {
     if (process.env.DEBUG) return RunType.Debug;
     if (fs.existsSync('./config/config.json')) return RunType.Local;
     else return RunType.Workflow;
 }
 
-function getConfigFromEnv() {
+function getConfigFromEnv () {
     const usernameArray = (process.env.ZJU_USERNAME || reportFatal('ZJU_USERNAME not set')).split(',').map(s => s.trim());
     const passwordArray = (process.env.ZJU_PASSWORD || reportFatal('ZJU_PASSWORD not set')).split(',').map(s => s.trim());
 
@@ -281,7 +277,7 @@ function getConfigFromEnv() {
     }
 }
 
-async function main() {
+async function main () {
     runType = determineRunType();
     if (runType === RunType.Local) {
         console.log('config.json exists, running as a self-hosted deployment');
