@@ -213,23 +213,27 @@ async function run (oldInfo: Info) {
         let tries = 0;
         const MaxTries = 5;
         for (tries = 0; tries < MaxTries; tries++) {
-            const error: SubmitResult = await trySubmit(account, oldInfo);
-            if (error.e !== 0) {
-                // There are few things we can do. Report the error is always a good idea.
-                await report(JSON.stringify(error));
-                if (error.m === '今天已经填报了') {
-                    // This is ok.
+            try {
+                const error: SubmitResult = await trySubmit(account, oldInfo);
+                if (error.e !== 0) {
+                    // There are few things we can do. Report the error is always a good idea.
+                    await report(JSON.stringify(error));
+                    if (error.m === '今天已经填报了') {
+                        // This is ok.
+                        break;
+                    }
+                    if (error.m === '验证码错误') {
+                        // This is possible, give it another few tries.
+                        continue;
+                    }
+                    // We do not know the error. Fail the github workflow, so that repo keeper would get an email.
+                    process.exit(1);
+                } else {
+                    report('Success!');
                     break;
                 }
-                if (error.m === '验证码错误') {
-                    // This is possible, give it another few tries.
-                    continue;
-                }
-                // We do not know the error. Fail the github workflow, so that repo keeper would get an email.
-                process.exit(1);
-            } else {
-                report('Success!');
-                break;
+            } catch(e){
+                continue;
             }
         }
         // Somehow we failed in a recoverable error even after MaxTries. It could be bad luck, or something else.
